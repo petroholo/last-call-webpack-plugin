@@ -5,7 +5,7 @@
   "description": "A Webpack plugin that allows to transform \\ modify assets just before Webpack emits them.",
   "dependencies": {
     "lodash": "^4.17.5",
-    "webpack-sources": "^1.1.0"
+    "webpack-sources": "^3.2.3"
   },
   "main": "src/index.js",
   "homepage": "http://github.com/NMFR/last-call-webpack-plugin",
