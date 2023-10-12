@@ -40,7 +40,8 @@ class LastCallWebpackPlugin {
     this.options = assign(
       {
         assetProcessors: [],
-        canPrint: true
+        canPrint: true,
+        loadSourceWithSourcemap: true
       },
       options || {}
     );
@@ -78,7 +79,7 @@ class LastCallWebpackPlugin {
         }
       } else {
         if (assetValue !== undefined) {
-          compilation.assets[assetName] = this.createAsset(assetValue, compilation.assets[assetName]);
+          compilation.assets[assetName] = this.createAsset(assetValue, compilation.assets[assetName], assetName);
         }
       }
     }
@@ -98,7 +99,11 @@ class LastCallWebpackPlugin {
     }
   }
 
-  createAsset(content, originalAsset) {
+  createAsset(content, originalAsset, assetName) {
+    if (this.options.loadSourceWithSourcemap) {
+      const { map } = originalAsset.sourceAndMap();
+      return new webpackSources.SourceMapSource(content, assetName, map);
+    }
     return new webpackSources.RawSource(content);
   }
 
@@ -134,6 +139,7 @@ class LastCallWebpackPlugin {
 
     const promises = [];
 
+
     const assetsManipulationObject = {
       setAsset: (assetName, assetValue, immediate) => {
         this.setAsset(assetName, assetValue, immediate, compilation);
@@ -167,13 +173,13 @@ class LastCallWebpackPlugin {
     const hasEmitProcessors =
       this.phaseAssetProcessors[PHASES.EMIT].length > 0;
 
-    compiler.hooks.compilation.tap(
+    compiler.hooks.thisCompilation.tap(
       this.pluginDescriptor,
       (compilation, params) => {
         this.resetInternalState();
 
         if (hasOptimizeChunkAssetsProcessors) {
-          compilation.hooks.optimizeChunkAssets.tapPromise(
+          compilation.hooks.afterOptimizeAssets.tapPromise(
             this.pluginDescriptor,
             chunks => this.process(compilation, PHASES.OPTIMIZE_CHUNK_ASSETS, { chunks: chunks })
           );
